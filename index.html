@@ -884,15 +884,85 @@
   .music-btn.paused {
     animation: none;
   }
+
+  /* ====== 加载页 ====== */
+  #loading-screen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a0a1e 0%, #2d1228 30%, #1a0a1e 100%);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  #loading-screen.hide {
+    opacity: 0;
+    transform: scale(1.05);
+    pointer-events: none;
+  }
+
+  .loading-heart {
+    font-size: 48px;
+    margin-bottom: 32px;
+    animation: loadingPulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes loadingPulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+
+  .loading-text {
+    font-size: 14px;
+    color: rgba(255,179,198,0.6);
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+  }
+
+  .loading-bar-wrap {
+    width: 200px;
+    height: 3px;
+    background: rgba(255,107,138,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .loading-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--pink), var(--rose));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .loading-percent {
+    font-size: 12px;
+    color: rgba(255,179,198,0.4);
+    font-variant-numeric: tabular-nums;
+  }
 </style>
 </head>
 <body>
+
+<!-- ====== 加载页 ====== -->
+<div id="loading-screen">
+  <div class="loading-heart">💕</div>
+  <div class="loading-text">正在准备你的恋爱报告</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+  <div class="loading-percent" id="loading-percent">0%</div>
+</div>
 
 <!-- 心形粒子 Canvas -->
 <canvas id="heart-canvas"></canvas>
 
 <!-- ====== 密码页面 ====== -->
-<div id="password-screen">
+<div id="password-screen" style="display:none;">
   <div class="stars" id="stars-container"></div>
   <svg class="lock-icon" viewBox="0 0 100 100">
     <path d="M50 10 C25 10, 10 30, 10 50 C10 70, 25 90, 50 90 C75 90, 90 70, 90 50 C90 30, 75 10, 50 10 Z
@@ -1215,6 +1285,54 @@
 </div>
 
 <script>
+// ====== 加载进度 ======
+(function() {
+  const bar = document.getElementById('loading-bar');
+  const percent = document.getElementById('loading-percent');
+  const loadingScreen = document.getElementById('loading-screen');
+  const passwordScreen = document.getElementById('password-screen');
+  let progress = 0;
+
+  // 模拟进度条（快速递增到 90%，等资源加载完再到 100%）
+  const timer = setInterval(() => {
+    if (progress < 90) {
+      progress += Math.random() * 12 + 3;
+      if (progress > 90) progress = 90;
+      bar.style.width = progress + '%';
+      percent.textContent = Math.floor(progress) + '%';
+    }
+  }, 200);
+
+  function finishLoading() {
+    clearInterval(timer);
+    progress = 100;
+    bar.style.width = '100%';
+    percent.textContent = '100%';
+
+    setTimeout(() => {
+      loadingScreen.classList.add('hide');
+      passwordScreen.style.display = 'flex';
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        // 聚焦密码输入框
+        document.querySelector('.pw-digit[data-idx="0"]').focus();
+      }, 600);
+    }, 400);
+  }
+
+  // 监听页面资源加载完成
+  if (document.readyState === 'complete') {
+    setTimeout(finishLoading, 500);
+  } else {
+    window.addEventListener('load', () => {
+      setTimeout(finishLoading, 500);
+    });
+  }
+
+  // 兜底：最多等 6 秒
+  setTimeout(finishLoading, 6000);
+})();
+
 // ====== 星星背景 ======
 function createStars(containerId, count) {
   const container = document.getElementById(containerId);
@@ -1261,8 +1379,7 @@ digits.forEach((input, idx) => {
   });
 });
 
-// 自动聚焦第一个
-setTimeout(() => digits[0].focus(), 500);
+// 聚焦由加载完成后触发
 
 function checkPassword() {
   const entered = Array.from(digits).map(d => d.value).join('');
