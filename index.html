@@ -838,6 +838,52 @@
   .page-bg-final .page-indicator {
     color: rgba(255,179,198,0.3);
   }
+
+  /* ====== 音乐按钮 ====== */
+  .music-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,107,138,0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,107,138,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 200;
+    transition: all 0.3s;
+    padding: 0;
+  }
+
+  .music-btn:active {
+    transform: scale(0.9);
+  }
+
+  .music-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--pink);
+  }
+
+  .music-btn.playing {
+    animation: musicRotate 3s linear infinite;
+    background: rgba(255,107,138,0.25);
+    box-shadow: 0 0 16px rgba(255,107,138,0.3);
+  }
+
+  @keyframes musicRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .music-btn.paused {
+    animation: none;
+  }
 </style>
 </head>
 <body>
@@ -877,6 +923,17 @@
   </div>
   <div class="pw-error" id="pw-error">密码不正确，再想想？💕</div>
 </div>
+
+<!-- 背景音乐 -->
+<audio id="bg-music" loop preload="auto">
+  <source src="https://cdn.jsdelivr.net/gh/CDlove2019/cd_2025_report@main/love_story.mp3" type="audio/mpeg">
+</audio>
+
+<!-- 音乐按钮 -->
+<button class="music-btn paused" id="music-btn" style="display:none;" onclick="toggleMusic()">
+  <svg id="music-icon-play" viewBox="0 0 24 24" style="display:none;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+  <svg id="music-icon-note" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+</button>
 
 <!-- ====== 主应用 ====== -->
 <div id="app">
@@ -1237,9 +1294,41 @@ function unlockReport() {
   setTimeout(() => {
     screen.style.display = 'none';
     document.getElementById('app').classList.add('show');
+    document.getElementById('music-btn').style.display = 'flex';
     startFloatingHearts();
     startHeartCanvas();
+    // 尝试自动播放音乐
+    playMusic();
   }, 800);
+}
+
+// ====== 音乐控制 ======
+const bgMusic = document.getElementById('bg-music');
+const musicBtn = document.getElementById('music-btn');
+let isMusicPlaying = false;
+
+function playMusic() {
+  bgMusic.play().then(() => {
+    isMusicPlaying = true;
+    musicBtn.classList.remove('paused');
+    musicBtn.classList.add('playing');
+  }).catch(() => {
+    // 自动播放被浏览器阻止，等用户点击
+    isMusicPlaying = false;
+    musicBtn.classList.add('paused');
+    musicBtn.classList.remove('playing');
+  });
+}
+
+function toggleMusic() {
+  if (isMusicPlaying) {
+    bgMusic.pause();
+    isMusicPlaying = false;
+    musicBtn.classList.add('paused');
+    musicBtn.classList.remove('playing');
+  } else {
+    playMusic();
+  }
 }
 
 // ====== 翻页逻辑 ======
