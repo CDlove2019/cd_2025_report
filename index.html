@@ -96,41 +96,112 @@
     letter-spacing: 2px;
   }
 
-  .pw-input-wrap {
+  /* ====== 滚轮密码锁 ====== */
+  .roller-wrap {
     display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
   }
 
-  .pw-digit {
+  .roller-col {
+    position: relative;
     width: 52px;
-    height: 60px;
-    background: rgba(255,107,138,0.1);
-    border: 1.5px solid rgba(255,107,138,0.3);
-    border-radius: 12px;
-    text-align: center;
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--pink);
-    outline: none;
-    caret-color: var(--pink);
-    transition: border-color 0.3s, box-shadow 0.3s;
-    /* iOS 兼容 */
-    -webkit-appearance: none;
-    appearance: none;
-    touch-action: manipulation;
+    height: 140px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(255,107,138,0.06);
+    border: 1.5px solid rgba(255,107,138,0.2);
   }
 
-  .pw-digit:focus {
-    border-color: var(--pink);
-    box-shadow: 0 0 20px rgba(255,107,138,0.3);
+  /* 上下渐隐遮罩 */
+  .roller-col::before,
+  .roller-col::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 45px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .roller-col::before {
+    top: 0;
+    background: linear-gradient(180deg, rgba(26,10,30,0.95) 0%, transparent 100%);
+  }
+
+  .roller-col::after {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(26,10,30,0.95) 0%, transparent 100%);
+  }
+
+  /* 选中行高亮框 */
+  .roller-highlight {
+    position: absolute;
+    top: 50%;
+    left: 4px; right: 4px;
+    height: 42px;
+    transform: translateY(-50%);
+    border: 1.5px solid var(--pink);
+    border-radius: 10px;
+    background: rgba(255,107,138,0.1);
+    box-shadow: 0 0 16px rgba(255,107,138,0.15);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .roller-list {
+    position: absolute;
+    left: 0; right: 0;
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .roller-item {
+    width: 100%;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(255,179,198,0.35);
+    transition: color 0.3s, transform 0.3s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .roller-item.active {
+    color: #fff;
+    transform: scale(1.1);
+  }
+
+  .pw-unlock-btn {
+    margin-top: 6px;
+    padding: 12px 48px;
+    border: 1.5px solid var(--pink);
+    background: rgba(255,107,138,0.12);
+    color: var(--pink-light);
+    font-size: 15px;
+    font-family: 'Noto Sans SC', sans-serif;
+    letter-spacing: 4px;
+    border-radius: 28px;
+    cursor: pointer;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pw-unlock-btn:active {
+    background: rgba(255,107,138,0.25);
+    transform: scale(0.96);
   }
 
   .pw-error {
     color: #ff4d6d;
     font-size: 13px;
     height: 20px;
-    margin-top: 8px;
+    margin-top: 12px;
     opacity: 0;
     transition: opacity 0.3s;
   }
@@ -951,6 +1022,34 @@
     color: rgba(255,179,198,0.4);
     font-variant-numeric: tabular-nums;
   }
+
+  .loading-enter-btn {
+    margin-top: 28px;
+    padding: 14px 52px;
+    border: 1.5px solid var(--pink);
+    background: rgba(255,107,138,0.12);
+    color: var(--pink-light);
+    font-size: 15px;
+    font-family: 'Noto Sans SC', sans-serif;
+    letter-spacing: 4px;
+    border-radius: 28px;
+    cursor: pointer;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .loading-enter-btn.show {
+    display: block;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .loading-enter-btn:active {
+    background: rgba(255,107,138,0.25);
+    transform: scale(0.96);
+  }
 </style>
 </head>
 <body>
@@ -963,43 +1062,11 @@
     <div class="loading-bar" id="loading-bar"></div>
   </div>
   <div class="loading-percent" id="loading-percent">0%</div>
+  <button class="loading-enter-btn" id="loading-enter-btn" onclick="enterReport()">开始阅读</button>
 </div>
 
 <!-- 心形粒子 Canvas -->
 <canvas id="heart-canvas"></canvas>
-
-<!-- ====== 密码页面 ====== -->
-<div id="password-screen" style="display:none;">
-  <div class="stars" id="stars-container"></div>
-  <svg class="lock-icon" viewBox="0 0 100 100">
-    <path d="M50 10 C25 10, 10 30, 10 50 C10 70, 25 90, 50 90 C75 90, 90 70, 90 50 C90 30, 75 10, 50 10 Z
-             M50 20 C30 20, 20 35, 20 50 C20 65, 30 80, 50 80 C70 80, 80 65, 80 50 C80 35, 70 20, 50 20 Z"
-          fill="none" stroke="rgba(255,107,138,0.3)" stroke-width="1"/>
-    <path d="M50 15 C75 15, 85 35, 85 50 C85 75, 65 85, 50 85 C35 85, 15 75, 15 50 C15 35, 25 15, 50 15"
-          fill="url(#heartGrad)" opacity="0.1"/>
-    <defs>
-      <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#ff6b8a"/>
-        <stop offset="100%" stop-color="#f7468a"/>
-      </linearGradient>
-    </defs>
-    <!-- Heart shape -->
-    <path d="M50 75 C50 75, 20 55, 20 38 C20 25, 30 20, 38 20 C44 20, 48 24, 50 30 C52 24, 56 20, 62 20 C70 20, 80 25, 80 38 C80 55, 50 75, 50 75Z"
-          fill="url(#heartGrad)" opacity="0.8"/>
-    <!-- Lock keyhole -->
-    <circle cx="50" cy="44" r="5" fill="rgba(255,255,255,0.9)"/>
-    <rect x="48" y="44" width="4" height="10" rx="1" fill="rgba(255,255,255,0.9)"/>
-  </svg>
-  <div class="pw-title">恋爱报告</div>
-  <div class="pw-subtitle">请输入专属密码解锁</div>
-  <div class="pw-input-wrap">
-    <input class="pw-digit" type="tel" maxlength="1" data-idx="0" inputmode="numeric" autocomplete="off">
-    <input class="pw-digit" type="tel" maxlength="1" data-idx="1" inputmode="numeric" autocomplete="off">
-    <input class="pw-digit" type="tel" maxlength="1" data-idx="2" inputmode="numeric" autocomplete="off">
-    <input class="pw-digit" type="tel" maxlength="1" data-idx="3" inputmode="numeric" autocomplete="off">
-  </div>
-  <div class="pw-error" id="pw-error">密码不正确，再想想？💕</div>
-</div>
 
 <!-- 背景音乐 -->
 <audio id="bg-music" loop preload="none">
@@ -1297,7 +1364,6 @@
   const bar = document.getElementById('loading-bar');
   const percent = document.getElementById('loading-percent');
   const loadingScreen = document.getElementById('loading-screen');
-  const passwordScreen = document.getElementById('password-screen');
   let progress = 0;
 
   // 模拟进度条（快速递增到 90%，等资源加载完再到 100%）
@@ -1310,18 +1376,18 @@
     }
   }, 200);
 
+  let loadingDone = false;
   function finishLoading() {
+    if (loadingDone) return;
+    loadingDone = true;
     clearInterval(timer);
     progress = 100;
     bar.style.width = '100%';
     percent.textContent = '100%';
 
+    // 显示"开始阅读"按钮
     setTimeout(() => {
-      loadingScreen.classList.add('hide');
-      passwordScreen.style.display = 'flex';
-      setTimeout(() => {
-        loadingScreen.style.display = 'none';
-      }, 600);
+      document.getElementById('loading-enter-btn').classList.add('show');
     }, 400);
   }
 
@@ -1353,77 +1419,23 @@ function createStars(containerId, count) {
     container.appendChild(star);
   }
 }
-createStars('stars-container', 60);
 createStars('stars-container-2', 60);
 createStars('stars-container-3', 60);
 
-// ====== 密码逻辑 ======
-const PASSWORD = '1026';
-const digits = document.querySelectorAll('.pw-digit');
-const pwError = document.getElementById('pw-error');
-
-digits.forEach((input, idx) => {
-  input.addEventListener('input', (e) => {
-    const val = e.target.value.replace(/\D/g, '');
-    e.target.value = val;
-    if (val && idx < 3) {
-      digits[idx + 1].focus();
-    }
-    checkPassword();
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Backspace' && !input.value && idx > 0) {
-      digits[idx - 1].focus();
-      digits[idx - 1].value = '';
-    }
-  });
-
-  input.addEventListener('focus', () => {
-    input.select();
-  });
-});
-
-// 聚焦由加载完成后触发
-
-function checkPassword() {
-  const entered = Array.from(digits).map(d => d.value).join('');
-  if (entered.length === 4) {
-    if (entered === PASSWORD) {
-      pwError.classList.remove('show');
-      // 成功解锁
-      unlockReport();
-    } else {
-      pwError.classList.add('show');
-      // 震动
-      digits.forEach(d => {
-        d.style.borderColor = '#ff4d6d';
-        setTimeout(() => d.style.borderColor = '', 500);
-      });
-      // 清空重试
-      setTimeout(() => {
-        digits.forEach(d => d.value = '');
-        digits[0].focus();
-        pwError.classList.remove('show');
-      }, 1200);
-    }
-  }
-}
-
-function unlockReport() {
-  const screen = document.getElementById('password-screen');
-  screen.classList.add('hide');
+// ====== 点击进入报告 ======
+function enterReport() {
+  const loadingScreen = document.getElementById('loading-screen');
+  loadingScreen.classList.add('hide');
   setTimeout(() => {
-    screen.style.display = 'none';
+    loadingScreen.style.display = 'none';
     document.getElementById('app').classList.add('show');
     document.getElementById('music-btn').style.display = 'flex';
-    // 显示心形粒子 canvas
     document.getElementById('heart-canvas').style.display = 'block';
     startFloatingHearts();
     startHeartCanvas();
-    // 尝试自动播放音乐
+    // 用户点击触发，可以自动播放音乐
     playMusic();
-  }, 800);
+  }, 600);
 }
 
 // ====== 音乐控制 ======
@@ -1514,6 +1526,15 @@ function prevPage() {
 
 // 初始化导航
 updateNav();
+
+// ====== 键盘左右翻页 ======
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    nextPage();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    prevPage();
+  }
+});
 
 // ====== 触摸滑动 ======
 let touchStartX = 0;
