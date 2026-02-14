@@ -47,6 +47,7 @@
     height: 100%;
     pointer-events: none;
     z-index: 9999;
+    display: none;
   }
 
   /* ====== 密码页 ====== */
@@ -102,8 +103,8 @@
   }
 
   .pw-digit {
-    width: 48px;
-    height: 56px;
+    width: 52px;
+    height: 60px;
     background: rgba(255,107,138,0.1);
     border: 1.5px solid rgba(255,107,138,0.3);
     border-radius: 12px;
@@ -114,6 +115,10 @@
     outline: none;
     caret-color: var(--pink);
     transition: border-color 0.3s, box-shadow 0.3s;
+    /* iOS 兼容 */
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
   }
 
   .pw-digit:focus {
@@ -1316,8 +1321,6 @@
       passwordScreen.style.display = 'flex';
       setTimeout(() => {
         loadingScreen.style.display = 'none';
-        // 聚焦密码输入框
-        document.querySelector('.pw-digit[data-idx="0"]').focus();
       }, 600);
     }, 400);
   }
@@ -1414,6 +1417,8 @@ function unlockReport() {
     screen.style.display = 'none';
     document.getElementById('app').classList.add('show');
     document.getElementById('music-btn').style.display = 'flex';
+    // 显示心形粒子 canvas
+    document.getElementById('heart-canvas').style.display = 'block';
     startFloatingHearts();
     startHeartCanvas();
     // 尝试自动播放音乐
