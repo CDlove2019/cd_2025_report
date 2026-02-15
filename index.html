@@ -917,6 +917,144 @@
     color: rgba(255,179,198,0.3);
   }
 
+  /* ====== 密码页 ====== */
+  #password-screen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1500;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a0a1e 0%, #2d1228 30%, #1a0a1e 100%);
+    transition: opacity 0.8s, transform 0.8s;
+  }
+
+  #password-screen.hide {
+    opacity: 0;
+    transform: scale(1.1);
+    pointer-events: none;
+  }
+
+  .pw-lock-icon {
+    font-size: 48px;
+    margin-bottom: 24px;
+    animation: floatHeart 3s ease-in-out infinite;
+  }
+
+  .pw-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 20px;
+    color: var(--pink-light);
+    margin-bottom: 6px;
+    letter-spacing: 4px;
+  }
+
+  .pw-subtitle {
+    font-size: 13px;
+    color: rgba(255,179,198,0.4);
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  /* 密码圆点 */
+  .pw-dots {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .pw-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,107,138,0.4);
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  .pw-dot.filled {
+    background: var(--pink);
+    border-color: var(--pink);
+    box-shadow: 0 0 10px rgba(255,107,138,0.4);
+  }
+
+  .pw-dot.error {
+    border-color: #ff4d6d;
+    background: #ff4d6d;
+    animation: shake 0.4s;
+  }
+
+  /* 数字键盘 */
+  .numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 68px);
+    gap: 14px;
+  }
+
+  .numpad-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,107,138,0.25);
+    background: rgba(255,107,138,0.06);
+    color: var(--pink-light);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 26px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .numpad-btn:active {
+    background: rgba(255,107,138,0.2);
+    border-color: var(--pink);
+    transform: scale(0.92);
+  }
+
+  .numpad-btn.empty {
+    border: none;
+    background: none;
+    pointer-events: none;
+  }
+
+  .numpad-btn.del {
+    font-size: 16px;
+    border: none;
+    background: none;
+    pointer-events: auto;
+    color: rgba(255,179,198,0.5);
+  }
+
+  .numpad-btn.del:active {
+    color: var(--pink-light);
+    background: none;
+    transform: scale(0.92);
+  }
+
+  .pw-error-msg {
+    color: #ff4d6d;
+    font-size: 13px;
+    height: 20px;
+    margin-top: 16px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .pw-error-msg.show {
+    opacity: 1;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
   /* ====== 音乐按钮 ====== */
   .music-btn {
     position: fixed;
@@ -1023,33 +1161,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .loading-enter-btn {
-    margin-top: 28px;
-    padding: 14px 52px;
-    border: 1.5px solid var(--pink);
-    background: rgba(255,107,138,0.12);
-    color: var(--pink-light);
-    font-size: 15px;
-    font-family: 'Noto Sans SC', sans-serif;
-    letter-spacing: 4px;
-    border-radius: 28px;
-    cursor: pointer;
-    transition: all 0.3s;
-    -webkit-tap-highlight-color: transparent;
-    display: none;
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  .loading-enter-btn.show {
-    display: block;
-    animation: fadeUp 0.6s ease forwards;
-  }
-
-  .loading-enter-btn:active {
-    background: rgba(255,107,138,0.25);
-    transform: scale(0.96);
-  }
 </style>
 </head>
 <body>
@@ -1062,11 +1173,38 @@
     <div class="loading-bar" id="loading-bar"></div>
   </div>
   <div class="loading-percent" id="loading-percent">0%</div>
-  <button class="loading-enter-btn" id="loading-enter-btn" onclick="enterReport()">开始阅读</button>
 </div>
 
 <!-- 心形粒子 Canvas -->
 <canvas id="heart-canvas"></canvas>
+
+<!-- ====== 密码页 ====== -->
+<div id="password-screen">
+  <div class="pw-lock-icon">💕</div>
+  <div class="pw-title">恋爱报告</div>
+  <div class="pw-subtitle">请输入专属密码解锁</div>
+  <div class="pw-dots">
+    <div class="pw-dot" id="dot-0"></div>
+    <div class="pw-dot" id="dot-1"></div>
+    <div class="pw-dot" id="dot-2"></div>
+    <div class="pw-dot" id="dot-3"></div>
+  </div>
+  <div class="numpad">
+    <div class="numpad-btn" onclick="pressKey('1')">1</div>
+    <div class="numpad-btn" onclick="pressKey('2')">2</div>
+    <div class="numpad-btn" onclick="pressKey('3')">3</div>
+    <div class="numpad-btn" onclick="pressKey('4')">4</div>
+    <div class="numpad-btn" onclick="pressKey('5')">5</div>
+    <div class="numpad-btn" onclick="pressKey('6')">6</div>
+    <div class="numpad-btn" onclick="pressKey('7')">7</div>
+    <div class="numpad-btn" onclick="pressKey('8')">8</div>
+    <div class="numpad-btn" onclick="pressKey('9')">9</div>
+    <div class="numpad-btn empty"></div>
+    <div class="numpad-btn" onclick="pressKey('0')">0</div>
+    <div class="numpad-btn del" onclick="pressDelete()">⌫</div>
+  </div>
+  <div class="pw-error-msg" id="pw-error-msg">密码不正确，再想想～</div>
+</div>
 
 <!-- 背景音乐 -->
 <audio id="bg-music" loop preload="none">
@@ -1385,9 +1523,13 @@
     bar.style.width = '100%';
     percent.textContent = '100%';
 
-    // 显示"开始阅读"按钮
+    // 显示密码页
     setTimeout(() => {
-      document.getElementById('loading-enter-btn').classList.add('show');
+      loadingScreen.classList.add('hide');
+      document.getElementById('password-screen').style.display = 'flex';
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+      }, 600);
     }, 400);
   }
 
@@ -1422,20 +1564,74 @@ function createStars(containerId, count) {
 createStars('stars-container-2', 60);
 createStars('stars-container-3', 60);
 
-// ====== 点击进入报告 ======
-function enterReport() {
-  const loadingScreen = document.getElementById('loading-screen');
-  loadingScreen.classList.add('hide');
+// ====== 密码键盘逻辑 ======
+const PASSWORD = '1026';
+let pwEntered = [];
+const pwDots = [0,1,2,3].map(i => document.getElementById('dot-' + i));
+const pwErrorMsg = document.getElementById('pw-error-msg');
+
+function pressKey(num) {
+  if (pwEntered.length >= 4) return;
+  pwEntered.push(num);
+  updateDots();
+
+  if (pwEntered.length === 4) {
+    setTimeout(() => {
+      if (pwEntered.join('') === PASSWORD) {
+        unlockReport();
+      } else {
+        // 错误
+        pwErrorMsg.classList.add('show');
+        pwDots.forEach(d => d.classList.add('error'));
+        if (navigator.vibrate) navigator.vibrate(200);
+        setTimeout(() => {
+          pwEntered = [];
+          updateDots();
+          pwDots.forEach(d => d.classList.remove('error'));
+          pwErrorMsg.classList.remove('show');
+        }, 1000);
+      }
+    }, 200);
+  }
+}
+
+function pressDelete() {
+  if (pwEntered.length > 0) {
+    pwEntered.pop();
+    updateDots();
+  }
+}
+
+function updateDots() {
+  pwDots.forEach((dot, i) => {
+    dot.classList.toggle('filled', i < pwEntered.length);
+  });
+}
+
+// 电脑键盘也能输入密码
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('password-screen').style.display === 'flex') {
+    if (e.key >= '0' && e.key <= '9') {
+      pressKey(e.key);
+    } else if (e.key === 'Backspace') {
+      pressDelete();
+    }
+  }
+});
+
+function unlockReport() {
+  const screen = document.getElementById('password-screen');
+  screen.classList.add('hide');
   setTimeout(() => {
-    loadingScreen.style.display = 'none';
+    screen.style.display = 'none';
     document.getElementById('app').classList.add('show');
     document.getElementById('music-btn').style.display = 'flex';
     document.getElementById('heart-canvas').style.display = 'block';
     startFloatingHearts();
     startHeartCanvas();
-    // 用户点击触发，可以自动播放音乐
+    // 用户交互触发，可以播放音乐
     playMusic();
-  }, 600);
+  }, 800);
 }
 
 // ====== 音乐控制 ======
@@ -1529,6 +1725,8 @@ updateNav();
 
 // ====== 键盘左右翻页 ======
 document.addEventListener('keydown', (e) => {
+  // 密码页显示时不翻页
+  if (document.getElementById('password-screen').style.display === 'flex') return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
     nextPage();
   } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
